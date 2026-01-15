@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/playerRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Podcast title -->
     <TextView
         android:id="@+id/txtNowPlaying"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Nothing playing"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <!-- Status / RSS info -->
+    <TextView
+        android:id="@+id/txtExtra"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select a podcast to begin"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:paddingTop="4dp" />
+
 </LinearLayout>

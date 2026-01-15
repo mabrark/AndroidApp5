@@ -6,7 +6,7 @@ import com.trios2025dej.androidapp5.repository.ItunesRepo
 import com.trios2025dej.androidapp5.util.DateUtils
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
-       lateinit var repo: ItunesRepo
+    lateinit var repo: ItunesRepo
 
     data class PodcastSummaryViewData(
         var name: String? = "",

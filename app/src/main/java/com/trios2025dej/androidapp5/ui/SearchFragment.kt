@@ -1,9 +1,14 @@
 package com.trios2025dej.androidapp5.ui
 
+import android.content.Context
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import com.trios2025dej.androidapp5.ui.PodcastAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -48,34 +53,55 @@ class SearchFragment : Fragment() {
         binding.recyclerResults.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerResults.adapter = adapter
 
-        binding.btnSearch.setOnClickListener {
-            val term = binding.inputSearch.text?.toString()?.trim().orEmpty()
-            if (term.isBlank()) {
-                Toast.makeText(requireContext(), "Enter a search term", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+        binding.btnSearch.setOnClickListener { runSearch() }
+
+        // Press Enter/Search on keyboard
+        binding.inputSearch.setOnEditorActionListener { _, actionId, event ->
+            val isEnter = (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || isEnter) {
+                runSearch()
+                true
+            } else {
+                false
             }
-            search(term)
         }
     }
 
-    private fun playPodcast(selected: PodcastResult) {
-        val title = selected.collectionName ?: "Unknown Podcast"
-        val previewUrl = selected.previewUrl
+    private fun runSearch() {
+        val term = binding.inputSearch.text?.toString()?.trim().orEmpty()
 
-        if (previewUrl.isNullOrBlank()) {
-            Toast.makeText(
-                requireContext(),
-                "No preview available for:\n$title",
-                Toast.LENGTH_LONG
-            ).show()
+        if (term.isBlank()) {
+            Toast.makeText(requireContext(), "Enter a search term", Toast.LENGTH_SHORT).show()
             return
         }
 
+        hideKeyboard()
+        search(term)
+    }
+
+    private fun hideKeyboard() {
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.inputSearch.windowToken, 0)
+        binding.inputSearch.clearFocus()
+    }
+
+
+
+    private fun playPodcast(selected: PodcastResult) {
+        // ✅ IMPORTANT: Set the queue FIRST
         PlayerQueue.nowPlaying = selected
 
-        // Switch to Player tab
-        val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottomNav)
-        bottomNav.selectedItemId = R.id.nav_player
+        // DEBUG proof
+        Toast.makeText(
+            requireContext(),
+            "Set nowPlaying = ${PlayerQueue.nowPlaying?.collectionName}",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        // ✅ Switch to Player tab
+        requireActivity()
+            .findViewById<BottomNavigationView>(R.id.bottomNav)
+            .selectedItemId = R.id.nav_player
     }
 
     private fun toggleSubscribe(selected: PodcastResult) {
@@ -94,7 +120,6 @@ class SearchFragment : Fragment() {
             Toast.makeText(requireContext(), "Subscribed", Toast.LENGTH_SHORT).show()
         }
 
-        // refresh subscribe button label
         adapter.notifyDataSetChanged()
     }
 
@@ -107,7 +132,7 @@ class SearchFragment : Fragment() {
                     ApiClient.api.searchPodcasts(term)
                 }
 
-                val results: List<PodcastResult> = response.results ?: emptyList()
+                val results = response.results ?: emptyList()
 
                 items.clear()
                 items.addAll(results)
@@ -116,7 +141,6 @@ class SearchFragment : Fragment() {
                 if (items.isEmpty()) {
                     Toast.makeText(requireContext(), "No results found", Toast.LENGTH_SHORT).show()
                 }
-
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Search failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {

@@ -22,19 +22,10 @@ class PlayerFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        refreshNowPlaying()
-    }
-
     override fun onResume() {
         super.onResume()
-        refreshNowPlaying()
-    }
-
-    private fun refreshNowPlaying() {
-        val nowPlaying = PlayerQueue.nowPlaying
-        binding.txtNowPlaying.text = nowPlaying?.collectionName ?: "Nothing playing"
+        val now = PlayerQueue.nowPlaying
+        binding.txtNowPlaying.text = now?.collectionName ?: "Nothing playing"
     }
 
     override fun onDestroyView() {

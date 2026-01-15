@@ -11,8 +11,10 @@
         android:id="@+id/inputSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search podcasts ()"
-        android:inputType="text" />
+        android:hint="Search podcasts (e.g. apple developer)"
+        android:inputType="text"
+        android:imeOptions="actionSearch"
+        android:singleLine="true"/>
 
     <Button
         android:id="@+id/btnSearch"
