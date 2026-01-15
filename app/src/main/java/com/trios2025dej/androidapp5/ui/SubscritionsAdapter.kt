@@ -13,28 +13,31 @@ class SubscriptionsAdapter(
     private val items: MutableList<PodcastResult>,
     private val onRemove: (PodcastResult, Int) -> Unit,
     private val onPlay: (PodcastResult) -> Unit
-) : RecyclerView.Adapter<SubscriptionsAdapter.VH>() {
+) : RecyclerView.Adapter<SubscriptionsAdapter.ViewHolder>() {
 
-    class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val txtTitle: TextView = itemView.findViewById(R.id.txtTitle)
         val txtArtist: TextView = itemView.findViewById(R.id.txtArtist)
         val btnRemove: Button = itemView.findViewById(R.id.btnRemove)
         val btnPlay: Button = itemView.findViewById(R.id.btnPlay)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_subscription, parent, false)
-        return VH(view)
+        return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: VH, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.txtTitle.text = item.collectionName ?: "(No title)"
+
+        holder.txtTitle.text = item.collectionName ?: "Untitled Podcast"
         holder.txtArtist.text = item.artistName ?: ""
 
         holder.btnRemove.setOnClickListener {
-            onRemove(item, position)
+            if (holder.adapterPosition != RecyclerView.NO_POSITION) {
+                onRemove(item, holder.adapterPosition)
+            }
         }
 
         holder.btnPlay.setOnClickListener {

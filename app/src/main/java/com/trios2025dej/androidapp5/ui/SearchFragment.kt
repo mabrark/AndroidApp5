@@ -14,6 +14,7 @@ import com.trios2025dej.androidapp5.databinding.FragmentSearchBinding
 import com.trios2025dej.androidapp5.models.PodcastResult
 import com.trios2025dej.androidapp5.network.ApiClient
 import com.trios2025dej.androidapp5.util.PlayerQueue
+import com.trios2025dej.androidapp5.util.SubscriptionsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,51 +39,66 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ✅ Adapter + click
-        adapter = PodcastAdapter(items) { selected: PodcastResult ->
-
-            val title = selected.collectionName ?: "Unknown Podcast"
-            val audioUrl = selected.previewUrl  // may be null (preview not available)
-
-            if (audioUrl.isNullOrBlank()) {
-                Toast.makeText(
-                    requireContext(),
-                    "No preview available for:\n$title\n\nNext step: parse feedUrl RSS for episodes.",
-                    Toast.LENGTH_LONG
-                ).show()
-                return@PodcastAdapter
-            }
-
-            // ✅ Set Now Playing (store the selected podcast in PlayerQueue)
-            PlayerQueue.nowPlaying = selected
-
-
-            // ✅ Switch to Player tab
-            requireActivity()
-                .findViewById<BottomNavigationView>(R.id.bottomNav)
-                .selectedItemId = R.id.nav_player
-        }
+        adapter = PodcastAdapter(
+            items = items,
+            onPlay = { selected -> playPodcast(selected) },
+            onSubscribeToggle = { selected -> toggleSubscribe(selected) }
+        )
 
         binding.recyclerResults.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerResults.adapter = adapter
 
-        // ✅ Search button
         binding.btnSearch.setOnClickListener {
-            val term = binding.inputSearch.text.toString().trim()
+            val term = binding.inputSearch.text?.toString()?.trim().orEmpty()
             if (term.isBlank()) {
                 Toast.makeText(requireContext(), "Enter a search term", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
-            // Advanced filter: regex (optional)
-            val regexText = binding.inputRegex.text.toString().trim()
-            val regex = regexText.takeIf { it.isNotBlank() }
-
-            search(term, regex)
+            search(term)
         }
     }
 
-    private fun search(term: String, regex: String?) {
+    private fun playPodcast(selected: PodcastResult) {
+        val title = selected.collectionName ?: "Unknown Podcast"
+        val previewUrl = selected.previewUrl
+
+        if (previewUrl.isNullOrBlank()) {
+            Toast.makeText(
+                requireContext(),
+                "No preview available for:\n$title",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        PlayerQueue.nowPlaying = selected
+
+        // Switch to Player tab
+        val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottomNav)
+        bottomNav.selectedItemId = R.id.nav_player
+    }
+
+    private fun toggleSubscribe(selected: PodcastResult) {
+        val id = selected.collectionId
+        if (id == null) {
+            Toast.makeText(requireContext(), "Cannot subscribe: missing collectionId", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val isSubbed = SubscriptionsManager.isSubscribed(requireContext(), selected)
+        if (isSubbed) {
+            SubscriptionsManager.removeSubscription(requireContext(), selected)
+            Toast.makeText(requireContext(), "Unsubscribed", Toast.LENGTH_SHORT).show()
+        } else {
+            SubscriptionsManager.addSubscription(requireContext(), selected)
+            Toast.makeText(requireContext(), "Subscribed", Toast.LENGTH_SHORT).show()
+        }
+
+        // refresh subscribe button label
+        adapter.notifyDataSetChanged()
+    }
+
+    private fun search(term: String) {
         binding.progress.visibility = View.VISIBLE
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -93,15 +109,8 @@ class SearchFragment : Fragment() {
 
                 val results: List<PodcastResult> = response.results ?: emptyList()
 
-                val filtered = if (!regex.isNullOrBlank()) {
-                    val r = Regex(regex, RegexOption.IGNORE_CASE)
-                    results.filter { (it.collectionName ?: "").contains(r) }
-                } else {
-                    results
-                }
-
                 items.clear()
-                items.addAll(filtered)
+                items.addAll(results)
                 adapter.notifyDataSetChanged()
 
                 if (items.isEmpty()) {

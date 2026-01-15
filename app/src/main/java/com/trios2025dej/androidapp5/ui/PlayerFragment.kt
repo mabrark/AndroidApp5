@@ -19,13 +19,22 @@ class PlayerFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPlayerBinding.inflate(inflater, container, false)
-
-        val nowPlaying = PlayerQueue.nowPlaying
-
-        binding.txtNowPlaying.text =
-            nowPlaying?.collectionName ?: "Nothing playing"
-
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        refreshNowPlaying()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshNowPlaying()
+    }
+
+    private fun refreshNowPlaying() {
+        val nowPlaying = PlayerQueue.nowPlaying
+        binding.txtNowPlaying.text = nowPlaying?.collectionName ?: "Nothing playing"
     }
 
     override fun onDestroyView() {

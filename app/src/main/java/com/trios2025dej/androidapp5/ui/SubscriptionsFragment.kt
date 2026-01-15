@@ -8,10 +8,11 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.trios2025dej.androidapp5.R
 import com.trios2025dej.androidapp5.models.PodcastResult
+import com.trios2025dej.androidapp5.util.PlayerQueue
 import com.trios2025dej.androidapp5.util.SubscriptionsManager
-import com.trios2025dej.androidapp5.util.PlayerQueue // optional if you have it
 
 class SubscriptionsFragment : Fragment() {
 
@@ -19,7 +20,7 @@ class SubscriptionsFragment : Fragment() {
     private lateinit var txtEmpty: TextView
     private lateinit var adapter: SubscriptionsAdapter
 
-    private lateinit var subs: MutableList<PodcastResult>
+    private val subs: MutableList<PodcastResult> = mutableListOf()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,38 +34,47 @@ class SubscriptionsFragment : Fragment() {
 
         recycler.layoutManager = LinearLayoutManager(requireContext())
 
-        // Load subscriptions from SharedPreferences
-        subs = SubscriptionsManager.getSubscriptions(requireContext())
+        // ✅ Initial load
+        subs.clear()
+        subs.addAll(SubscriptionsManager.getSubscriptions(requireContext()))
 
         adapter = SubscriptionsAdapter(
             subs,
             onRemove = { podcast, position ->
-                // remove from prefs
                 SubscriptionsManager.removeSubscription(requireContext(), podcast)
-                // remove from list + update UI
-                subs.removeAt(position)
-                adapter.notifyItemRemoved(position)
+
+                if (position in subs.indices) {
+                    subs.removeAt(position)
+                    adapter.notifyItemRemoved(position)
+                } else {
+                    // Fallback
+                    subs.clear()
+                    subs.addAll(SubscriptionsManager.getSubscriptions(requireContext()))
+                    adapter.notifyDataSetChanged()
+                }
+
                 updateEmptyState()
             },
             onPlay = { podcast ->
-                // If you have a queue system, set it here:
-                // Example: PlayerQueue.nowPlaying = podcast
-                // Then switch to Player tab.
-               // ONLY if your PlayerQueue supports this
+                // ✅ Set Now Playing
+                PlayerQueue.nowPlaying = podcast
 
-                // If you DON'T have this yet, comment out line above and we’ll wire it next.
+                // ✅ Switch to Player tab
+                val bottomNav = requireActivity().findViewById<BottomNavigationView?>(R.id.bottomNav)
+                bottomNav?.selectedItemId = R.id.nav_player
             }
         )
 
         recycler.adapter = adapter
-
         updateEmptyState()
+
         return view
     }
 
     override fun onResume() {
         super.onResume()
-        // Refresh list when coming back from Search
+
+        // ✅ Refresh list when returning from Search screen
         subs.clear()
         subs.addAll(SubscriptionsManager.getSubscriptions(requireContext()))
         adapter.notifyDataSetChanged()
@@ -72,6 +82,8 @@ class SubscriptionsFragment : Fragment() {
     }
 
     private fun updateEmptyState() {
-        txtEmpty.visibility = if (subs.isEmpty()) View.VISIBLE else View.GONE
+        val empty = subs.isEmpty()
+        txtEmpty.visibility = if (empty) View.VISIBLE else View.GONE
+        recycler.visibility = if (empty) View.GONE else View.VISIBLE
     }
 }

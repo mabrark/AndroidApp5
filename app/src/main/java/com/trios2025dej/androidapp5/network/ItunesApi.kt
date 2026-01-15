@@ -9,8 +9,6 @@ interface ItunesApi {
     @GET("search")
     suspend fun searchPodcasts(
         @Query("term") term: String,
-        @Query("media") media: String = "podcast",
-        @Query("entity") entity: String = "podcast",
-        @Query("limit") limit: Int = 25
+        @Query("media") media: String = "podcast"
     ): ItunesSearchResponse
 }

@@ -1,0 +1,32 @@
+package com.trios2025dej.androidapp5.viewModel
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import com.trios2025dej.androidapp5.repository.ItunesRepo
+import com.trios2025dej.androidapp5.util.DateUtils
+
+class SearchViewModel(application: Application) : AndroidViewModel(application) {
+       lateinit var repo: ItunesRepo
+
+    data class PodcastSummaryViewData(
+        var name: String? = "",
+        var lastUpdated: String? = "",
+        var imageUrl: String? = "",
+        var feedUrl: String? = ""
+    )
+
+    suspend fun search(term: String): List<PodcastSummaryViewData> {
+        val response = repo.searchByTerm(term)
+        if (response.isSuccessful) {
+            return response.body()?.results?.map {
+                PodcastSummaryViewData(
+                    it.collectionCensoredName,
+                    DateUtils.jsonDateToShortDate(it.releaseDate),
+                    it.artworkUrl100,
+                    it.feedUrl
+                )
+            } ?: emptyList()
+        }
+        return emptyList()
+    }
+}

@@ -4,22 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:paddingBottom="72dp">
 
     <EditText
         android:id="@+id/inputSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search podcasts (e.g. science, history)"
+        android:hint="Search podcasts ()"
         android:inputType="text" />
-
-    <EditText
-        android:id="@+id/inputRegex"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Optional regex filter (advanced)"
-        android:inputType="text"
-        android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/btnSearch"
